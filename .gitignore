@@ -18,8 +18,8 @@ ffprobe.exe
 # pyopenjtalk dictionary (auto-downloaded by pip)
 ref/open_jtalk_dic_utf_8-1.11/
 
-# Generated audio files (root only)
-/*.wav
+# Audio files (user must provide their own reference audio)
+*.wav
 
 # IDE
 .idea/

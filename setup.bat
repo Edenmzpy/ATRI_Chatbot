@@ -70,15 +70,22 @@ if not exist SoVITS_weights_v2\ (
     echo   [INFO] SoVITS_weights_v2/ not found.
     echo   - Place your SoVITS model weights in SoVITS_weights_v2/
 )
+if not exist ref\*.wav (
+    echo   [INFO] No .wav found in ref/.
+    echo   - Place your TTS reference audio in ref/
+)
 echo   Done.
 
 echo.
 echo ============================================
-echo   Setup complete! Quick start:
+echo   Setup complete! Before running, check:
 echo.
-echo   1. Make sure Ollama is running
-echo   2. ollama create ATRI -f ATRI    (first time only)
-echo   3. gui.bat                        (launch the app)
+echo   1. ref/             - contains your reference audio (.wav)
+echo   2. GPT_weights_v2/  - contains your GPT model weights
+echo   3. SoVITS_weights_v2/ - contains your SoVITS model weights
+echo   4. Make sure Ollama is running
+echo   5. ollama create ATRI -f ATRI    (first time only)
+echo   6. gui.bat                        (launch the app)
 echo ============================================
 echo.
 pause

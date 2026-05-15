@@ -35,6 +35,7 @@ setup.bat
 #    - SoVITS_weights_v2/  （SoVITS 模型权重）
 #    - ffmpeg.exe          （音频处理）
 #    - ffprobe.exe         （音频处理）
+#    - ref/<参考音频.wav>  （TTS 参考音频，建议 3-10 秒干净人声）
 
 # 5. 启动
 gui.bat
@@ -57,7 +58,7 @@ ATRI_Chatbot/
 ├── Live_2d_models/        # Live2D 角色模型
 ├── GPT_SoVITS/            # TTS 推理引擎（源码）
 ├── tools/                 # 工具模块
-├── ref/                   # 参考音频
+├── ref/                   # 参考音频（需自行准备）
 └── config.yaml            # 配置项
 ```
 
@@ -71,7 +72,7 @@ tts_url: 'http://localhost:9880/tts'                 # TTS API
 chat_model: "ATRI:latest"                            # Ollama 模型名
 chat_robot_name: 'ATRI'                              # 机器人名称
 user_name: 'Eden'                                    # 用户名称
-ref_audio_path: 'ref\xxx.wav'                        # TTS 参考音频
+ref_audio_path: 'ref\your_audio.wav'                  # TTS 参考音频（自行准备）
 ```
 
 ## 构建你的角色
