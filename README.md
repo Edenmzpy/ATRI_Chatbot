@@ -1,11 +1,11 @@
 # ATRI Chatbot
 
-基于 **Live2D + Ollama + GPT-SoVITS** 的桌面 AI 对话机器人，支持实时语音合成与唇形同步。
+基于 **Live2D + Ollama + Genie-TTS** 的桌面 AI 对话机器人，支持实时语音合成与唇形同步。
 
 ## 功能
 
-- **对话** — ATRI 角色模型（Ollama），流式流式输出
-- **语音** — GPT-SoVITS TTS，角色语音合成
+- **对话** — ATRI 角色模型（Ollama），流式输出
+- **语音** — Genie-TTS（GPT-SoVITS ONNX 优化引擎），角色语音合成
 - **口型同步** — Live2D 模型根据语音自动张嘴闭嘴
 - **Live2D 交互** — 眨眼、呼吸、表情
 
@@ -15,7 +15,6 @@
 |---|---|
 | Python 3.9 | https://www.python.org/downloads/ |
 | Ollama | https://ollama.com/download |
-| ffmpeg | https://ffmpeg.org/download.html |
 
 ## 快速开始
 
@@ -30,34 +29,46 @@ ollama create ATRI -f ATRI
 # 3. 一键安装环境
 setup.bat
 
-# 4. 将以下文件放入项目根目录
-#    - GPT_weights_v2/     （GPT 模型权重）
-#    - SoVITS_weights_v2/  （SoVITS 模型权重）
-#    - ffmpeg.exe          （音频处理）
-#    - ffprobe.exe         （音频处理）
-#    - ref/<参考音频.wav>  （TTS 参考音频，建议 3-10 秒干净人声）
+# 4. 准备模型和音频
+#    - onnx_model/ganyu/  （转换后的 ONNX 模型，见下方转换说明）
+#    - genie_data/        （中文 HuBERT 模型，setup 会自动处理）
+#    - ref/<参考音频.wav> （TTS 参考音频，建议 3-10 秒干净人声）
 
 # 5. 启动
 gui.bat
+```
+
+### 转换现有 GPT-SoVITS 模型
+
+如果你已有 GPT-SoVITS V2 的 `.pth` 和 `.ckpt` 权重文件：
+
+```bash
+venv\Scripts\python -c "
+import genie_tts as genie
+genie.convert_to_onnx(
+    torch_ckpt_path='GPT_weights_v2/your_model.ckpt',
+    torch_pth_path='SoVITS_weights_v2/your_model.pth',
+    output_dir='onnx_model/ganyu'
+)
+"
 ```
 
 ## 文件结构
 
 ```
 ATRI_Chatbot/
-├── gui.py                 # 主界面（PyQt5 + Live2D）
-├── api_v2.py              # TTS 服务（GPT-SoVITS）
+├── gui.py                 # 主界面（PyQt5 + Live2D，内置 Genie-TTS）
+├── api_v2.py              # 独立 TTS API 服务器（可选）
 ├── config.yaml            # 配置文件
 ├── ATRI                   # Ollama 角色模型定义
 ├── gui.bat                # 一键启动脚本
 ├── start_api.bat          # 单独启动 TTS 服务
 ├── start_gui.bat          # 单独启动 GUI
 ├── setup.bat              # 环境初始化脚本
-├── download_models.py     # 预训练模型下载
 ├── requirements.txt       # Python 依赖
 ├── Live_2d_models/        # Live2D 角色模型
-├── GPT_SoVITS/            # TTS 推理引擎（源码）
-├── tools/                 # 工具模块
+├── onnx_model/ganyu/      # ONNX 格式 TTS 模型
+├── genie_data/            # 中文 HuBERT 模型等资源
 ├── ref/                   # 参考音频（需自行准备）
 └── config.yaml            # 配置项
 ```
@@ -68,11 +79,11 @@ ATRI_Chatbot/
 
 ```yaml
 dialog_url: 'http://localhost:11434/api/generate'   # Ollama API
-tts_url: 'http://localhost:9880/tts'                 # TTS API
 chat_model: "ATRI:latest"                            # Ollama 模型名
-chat_robot_name: 'ATRI'                              # 机器人名称
-user_name: 'Eden'                                    # 用户名称
-ref_audio_path: 'ref\your_audio.wav'                  # TTS 参考音频（自行准备）
+character_name: 'ganyu'                              # TTS 角色名
+onnx_model_dir: 'onnx_model/ganyu'                   # ONNX 模型目录
+ref_audio_path: 'ref\your_audio.wav'                 # TTS 参考音频（自行准备）
+ref_prompt_text: "参考音频的文字内容"                  # 参考音频的文字
 ```
 
 ## 构建你的角色

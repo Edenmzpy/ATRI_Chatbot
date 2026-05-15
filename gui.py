@@ -1,22 +1,28 @@
-import yaml
+import os
 import sys
-import requests
-import json
+import time
 import threading
 import re
+import json
+import glob
+
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+import yaml
+import requests
 import pygame
-import io
-import os
-from pydub import AudioSegment
 import live2d.v3 as live2d
 from live2d.v3 import StandardParams
 from live2d.utils.lipsync import WavHandler
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPalette, QBrush, QPainter, QIcon
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QTextEdit,
     QLineEdit, QPushButton, QMainWindow, QOpenGLWidget, QSplitter,
 )
+
+import genie_tts as genie
+from genie_tts.Core.Inference import tts_client as _genie_tts_client
 
 
 def load_config():
@@ -27,7 +33,6 @@ def load_config():
 
 config = load_config()
 dialog_url = config['dialog_url']
-tts_url = config['tts_url']
 headers = {'Content-Type': 'application/json'}
 
 
@@ -99,11 +104,23 @@ class Live2DWidget(QOpenGLWidget):
 
     def start_audio(self):
         if self.audioPath and not self.audioPlayed:
+            pygame.mixer.music.stop()
             pygame.mixer.music.load(self.audioPath)
             pygame.mixer.music.play()
             self.wavHandler.Start(self.audioPath)
             self.audioPlayed = True
             self.update_lipsync()
+            # Clean up old TTS temp files
+            self._cleanup_old_audio()
+
+    def _cleanup_old_audio(self):
+        old = [f for f in glob.glob(os.path.join(os.path.dirname(__file__), "tts_*.wav"))
+               if f != self.audioPath]
+        for f in old:
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
     def update_lipsync(self):
         if self.wavHandler.Update():
@@ -120,12 +137,51 @@ class Live2DWidget(QOpenGLWidget):
 
 
 class ChatApp(QWidget):
+    # Thread-safe signals for cross-thread GUI updates
+    append_text_signal = pyqtSignal(str)        # append text to chat
+    append_error_signal = pyqtSignal(str)       # show error message
+    tts_ready_signal = pyqtSignal(str)          # audio file ready for playback
+
     def __init__(self, live2d_widget):
         super().__init__()
         self.live2d_widget = live2d_widget
         self.initUI()
         pygame.mixer.init()
         self._set_live2d_background()
+        self._init_tts()
+
+        # Connect signals (main thread)
+        self.append_text_signal.connect(self._append_text)
+        self.append_error_signal.connect(self._append_error)
+        self.tts_ready_signal.connect(self._on_tts_ready)
+
+    def _append_text(self, text):
+        self.chat_window.insertPlainText(text)
+
+    def _append_error(self, msg):
+        self.chat_window.append(msg)
+
+    def _on_tts_ready(self, audio_path):
+        # Runs in main thread — safe to access pygame mixer
+        self.live2d_widget.audioPath = audio_path
+        self.live2d_widget.audioPlayed = False
+
+    def _init_tts(self):
+        """Load TTS character model and set reference audio."""
+        try:
+            genie.load_character(config['character_name'],
+                                 config['onnx_model_dir'],
+                                 language='chinese')
+            genie.set_reference_audio(
+                config['character_name'],
+                config['ref_audio_path'],
+                config['ref_prompt_text'],
+                language='chinese')
+            print("TTS model loaded.")
+        except Exception as e:
+            msg = f"TTS init failed: {e}"
+            print(msg)
+            self.append_error_signal.emit(f"[TTS] {msg}")
 
     def initUI(self):
         self.setWindowTitle("None")
@@ -188,68 +244,76 @@ class ChatApp(QWidget):
             target=self.send_request, args=(data,), daemon=True
         ).start()
 
-    def send_request(self, data):
-        try:
-            with requests.post(
-                dialog_url, headers=headers, json=data, stream=True
-            ) as response:
-                bot_response = ""
-                self.chat_window.append(f"{config['chat_robot_name']}:")
-                for line in response.iter_lines():
-                    if line:
-                        response_data = json.loads(line)
-                        if 'response' in response_data:
-                            bot_response += response_data['response']
-                            self.chat_window.insertPlainText(
-                                response_data['response']
-                            )
-                        if 'done' in response_data and response_data['done']:
-                            self.chat_window.append("")
-                            break
-                self.conversation_history.append(bot_response)
-                self.text_to_speech(bot_response)
-        except Exception as e:
-            print(f"Can't load llm: {e}")
+    def send_request(self, data, retries=3):
+        import requests.exceptions as req_err
+
+        for attempt in range(retries):
+            try:
+                with requests.post(
+                    dialog_url, headers=headers, json=data, stream=True, timeout=(5, 60)
+                ) as response:
+                    bot_response = ""
+                    self.append_text_signal.emit(f"{config['chat_robot_name']}:")
+                    for line in response.iter_lines():
+                        if line:
+                            response_data = json.loads(line)
+                            if 'response' in response_data:
+                                bot_response += response_data['response']
+                                self.append_text_signal.emit(
+                                    response_data['response']
+                                )
+                            if 'done' in response_data and response_data['done']:
+                                self.append_text_signal.emit("\n")
+                                break
+                    self.conversation_history.append(bot_response)
+                    self.text_to_speech(bot_response)
+                    return  # success
+            except (req_err.ConnectionError, req_err.Timeout) as e:
+                msg = f"[API] 连接失败(尝试 {attempt+1}/{retries}): {e}"
+                print(msg)
+                if attempt < retries - 1:
+                    self.append_error_signal.emit(f"[API] 正在重试({attempt+2}/{retries})...")
+                    time.sleep(1.5 * (attempt + 1))  # 1.5s, 3s, 4.5s backoff
+                else:
+                    self.append_error_signal.emit(f"[API] 连接失败: {e}")
+            except Exception as e:
+                self.append_error_signal.emit(f"[API] 请求异常: {e}")
+                print(f"Can't load llm: {e}")
+                return  # non-retryable, give up
 
     def text_to_speech(self, text):
         try:
             cleaned_text = re.sub(r'\(.*?\)', '', text)
-            data = {
-                "text": cleaned_text,
-                "text_lang": config['text_lang'],
-                "ref_audio_path": config['ref_audio_path'],
-                "prompt_lang": config['prompt_lang'],
-                "prompt_text": config['ref_prompt_text'],
-                "top_k": 5,
-                "top_p": 1,
-                "temperature": 1,
-                "text_split_method": "cut5",
-                "batch_size": 1,
-                "batch_threshold": 0.75,
-                "speed_factor": 1.0,
-                "media_type": "wav",
-                "streaming_mode": False,
-            }
+            if not cleaned_text.strip():
+                print(f"TTS skipped: empty text after cleaning '{text}'")
+                return
 
-            response = requests.post(tts_url, headers=headers, json=data)
-            if response.status_code == 200:
-                audio_bytes = io.BytesIO(response.content)
-                audio_segment = AudioSegment.from_wav(audio_bytes)
+            # Unique filename per TTS to avoid Windows file-lock conflicts
+            audio_path = os.path.join(
+                os.path.dirname(__file__),
+                f"tts_{int(time.time() * 1000)}.wav"
+            )
 
-                pygame.mixer.quit()
-                pygame.mixer.init()
+            print(f"TTS starting for: '{cleaned_text[:80]}...' -> {audio_path}")
+            # Clear any stale stop_event from prior interrupted sessions
+            _genie_tts_client.stop_event.clear()
+            genie.tts(config['character_name'], cleaned_text,
+                      play=False, split_sentence=False, save_path=audio_path)
+            print("TTS returned successfully")
 
-                audio_path = "tts_output.wav"
-                audio_segment.export(
-                    audio_path, format="wav", parameters=["-ac", "1"]
-                )
-                self.live2d_widget.audioPath = audio_path
-                self.live2d_widget.audioPlayed = False
-                self.live2d_widget.start_audio()
+            if os.path.isfile(audio_path) and os.path.getsize(audio_path) > 0:
+                print(f"TTS OK: {os.path.getsize(audio_path)} bytes -> {audio_path}")
+                self.tts_ready_signal.emit(audio_path)
             else:
-                print(f"Error: {response.status_code}, {response.text}")
+                exists = os.path.exists(audio_path)
+                size = os.path.getsize(audio_path) if exists else 0
+                print(f"TTS empty: file_exists={exists}, size={size}, text='{cleaned_text[:50]}'")
+                self.append_error_signal.emit(f"[TTS] 生成的音频为空 (file={exists}, size={size})")
         except Exception as e:
-            print(f"Fail to play: {e}")
+            import traceback
+            traceback.print_exc()
+            self.append_error_signal.emit(f"[TTS] 生成语音失败: {e}")
+            print(f"TTS failed: {e}")
 
 
 class MainWindow(QMainWindow):
@@ -272,7 +336,6 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(main_widget)
         layout.addWidget(splitter)
 
-        self.live2d_widget.start_audio()
         self._set_black_background()
 
     def _set_black_background(self):
