@@ -54,10 +54,6 @@ if not exist onnx_model\ganyu\ (
     echo   [INFO] ONNX model not found. To convert your GPT-SoVITS models:
     echo     venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/ganyu')"
 )
-if not exist genie_data\chinese-hubert-base\chinese-hubert-base.onnx (
-    echo   [INFO] HuBERT model not found. Run:
-    echo     venv\Scripts\python -c "from huggingface_hub import hf_hub_download; print(hf_hub_download('High-Logic/Genie', 'GenieData/chinese-hubert-base/chinese-hubert-base.onnx'))"
-)
 if not exist ref\*.wav (
     echo   [INFO] No .wav found in ref/.
     echo   - Place your TTS reference audio in ref/
@@ -70,7 +66,7 @@ echo   Setup complete! Before running, check:
 echo.
 echo   1. ref/             - contains your reference audio (.wav)
 echo   2. onnx_model/      - contains converted ONNX model
-echo   3. genie_data/      - contains HuBERT model for Chinese TTS
+echo   3. GenieData/       - contains TTS model (HuBERT/G2P/RoBERTa)
 echo   4. Make sure Ollama is running
 echo   5. ollama create ATRI -f ATRI    (first time only)
 echo   6. gui.bat                        (launch the app)
