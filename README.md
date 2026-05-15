@@ -58,7 +58,6 @@ genie.convert_to_onnx(
 ```
 ATRI_Chatbot/
 ├── gui.py                 # 主界面（PyQt5 + Live2D，内置 Genie-TTS）
-├── api_v2.py              # 独立 TTS API 服务器（可选）
 ├── config.yaml            # 配置文件
 ├── ATRI                   # Ollama 角色模型定义
 ├── gui.bat                # 一键启动脚本
