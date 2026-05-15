@@ -15,6 +15,11 @@ GPT_SoVITS/pretrained_models/
 ffmpeg.exe
 ffprobe.exe
 
+# Genie-TTS generated data
+GenieData/
+genie_data/
+onnx_model/
+
 # pyopenjtalk dictionary (auto-downloaded by pip)
 ref/open_jtalk_dic_utf_8-1.11/
 
@@ -24,6 +29,12 @@ ref/open_jtalk_dic_utf_8-1.11/
 # IDE
 .idea/
 .vscode/
+
+# Claude Code
+.claude/
+
+# Cache
+.cache/
 
 # OS
 .DS_Store

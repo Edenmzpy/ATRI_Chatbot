@@ -9,8 +9,6 @@ echo.
 echo [Prerequisites - Install these first:]
 echo   1. Python 3.9  https://www.python.org/downloads/
 echo   2. Ollama      https://ollama.com/download
-echo   3. ffmpeg      https://ffmpeg.org/download.html
-echo      (or place ffmpeg.exe + ffprobe.exe in project root)
 echo.
 echo   After installing Ollama, create the ATRI model:
 echo     ollama create ATRI -f ATRI
@@ -30,7 +28,7 @@ REM ---- Create venv ----
 if exist venv\ (
     echo [SKIP] venv/ already exists
 ) else (
-    echo [1/4] Creating virtual environment...
+    echo [1/3] Creating virtual environment...
     python -m venv venv
     if %errorlevel% neq 0 (
         echo [ERROR] Failed to create venv
@@ -41,7 +39,7 @@ if exist venv\ (
 )
 
 REM ---- Install deps ----
-echo [2/4] Installing Python dependencies...
+echo [2/3] Installing Python dependencies...
 venv\Scripts\pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] pip install failed
@@ -50,25 +48,15 @@ if %errorlevel% neq 0 (
 )
 echo   Done.
 
-REM ---- Download pretrained models ----
-echo [3/4] Downloading pretrained TTS models...
-venv\Scripts\python download_models.py
-if %errorlevel% neq 0 (
-    echo [ERROR] Model download failed
-    pause
-    exit /b 1
+REM ---- Convert models (if needed) ----
+echo [3/3] Checking TTS setup...
+if not exist onnx_model\ganyu\ (
+    echo   [INFO] ONNX model not found. To convert your GPT-SoVITS models:
+    echo     venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/ganyu')"
 )
-echo   Done.
-
-REM ---- Place custom weights ----
-echo [4/4] Setting up custom weights...
-if not exist GPT_weights_v2\ (
-    echo   [INFO] GPT_weights_v2/ not found.
-    echo   - Place your GPT model weights in GPT_weights_v2/
-)
-if not exist SoVITS_weights_v2\ (
-    echo   [INFO] SoVITS_weights_v2/ not found.
-    echo   - Place your SoVITS model weights in SoVITS_weights_v2/
+if not exist genie_data\chinese-hubert-base\chinese-hubert-base.onnx (
+    echo   [INFO] HuBERT model not found. Run:
+    echo     venv\Scripts\python -c "from huggingface_hub import hf_hub_download; print(hf_hub_download('High-Logic/Genie', 'GenieData/chinese-hubert-base/chinese-hubert-base.onnx'))"
 )
 if not exist ref\*.wav (
     echo   [INFO] No .wav found in ref/.
@@ -81,8 +69,8 @@ echo ============================================
 echo   Setup complete! Before running, check:
 echo.
 echo   1. ref/             - contains your reference audio (.wav)
-echo   2. GPT_weights_v2/  - contains your GPT model weights
-echo   3. SoVITS_weights_v2/ - contains your SoVITS model weights
+echo   2. onnx_model/      - contains converted ONNX model
+echo   3. genie_data/      - contains HuBERT model for Chinese TTS
 echo   4. Make sure Ollama is running
 echo   5. ollama create ATRI -f ATRI    (first time only)
 echo   6. gui.bat                        (launch the app)
