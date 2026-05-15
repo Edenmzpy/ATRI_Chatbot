@@ -31,7 +31,7 @@ setup.bat
 
 # 4. 准备模型和音频
 #    - onnx_model/ganyu/  （转换后的 ONNX 模型，见下方转换说明）
-#    - genie_data/        （中文 HuBERT 模型，setup 会自动处理）
+#    - GenieData/         （TTS 推理模型，首次运行自动下载）
 #    - ref/<参考音频.wav> （TTS 参考音频，建议 3-10 秒干净人声）
 
 # 5. 启动
@@ -62,13 +62,11 @@ ATRI_Chatbot/
 ├── config.yaml            # 配置文件
 ├── ATRI                   # Ollama 角色模型定义
 ├── gui.bat                # 一键启动脚本
-├── start_api.bat          # 单独启动 TTS 服务
-├── start_gui.bat          # 单独启动 GUI
 ├── setup.bat              # 环境初始化脚本
 ├── requirements.txt       # Python 依赖
 ├── Live_2d_models/        # Live2D 角色模型
 ├── onnx_model/ganyu/      # ONNX 格式 TTS 模型
-├── genie_data/            # 中文 HuBERT 模型等资源
+├── GenieData/             # TTS 推理模型（HuBERT/G2P/RoBERTa）
 ├── ref/                   # 参考音频（需自行准备）
 └── config.yaml            # 配置项
 ```
