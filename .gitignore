@@ -1,0 +1,30 @@
+# Python virtual environment / portable runtime
+runtime/
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Model weights (user must obtain separately)
+GPT_weights_v2/
+SoVITS_weights_v2/
+GPT_SoVITS/pretrained_models/
+ffmpeg.exe
+ffprobe.exe
+
+# pyopenjtalk dictionary (auto-downloaded by pip)
+ref/open_jtalk_dic_utf_8-1.11/
+
+# Generated audio files (root only)
+/*.wav
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

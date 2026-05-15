@@ -1,0 +1,24 @@
+#sever url
+dialog_url: 'http://localhost:11434/api/generate'
+tts_url: 'http://localhost:9880/tts'
+
+#live2d
+icon_image: 'icon_image\icon.jpg'
+live2d_model: 'atri\atri.model3.json'
+live2d_background: 'live2d_background\star.png'
+
+#llm
+chat_background: 'chat_background\chat.png'
+chat_model: "ATRI:latest"
+chat_robot_name: 'ATRI'
+user_name: 'Eden'
+window_name: 'ATRI'
+
+#text to speech
+text_lang: zh
+prompt_lang: zh
+sovits_model_path: 'SoVITS_weights_v2\ganyu.pth'
+gpt_model_path: 'GPT_weights_v2\ganyu.ckpt'
+ref_audio_path: 'ref\但只要最后落在具体的「人」身上，那，我可以想办法。.wav'
+ref_prompt_text: "但只要最后落在具体的「人」身上，那，我可以想办法。"
+
