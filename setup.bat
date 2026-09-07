@@ -48,11 +48,18 @@ if %errorlevel% neq 0 (
 )
 echo   Done.
 
-REM ---- Convert models (if needed) ----
-echo [3/3] Checking TTS setup...
-if not exist onnx_model\ganyu\ (
+REM ---- Prepare local config and check models ----
+echo [3/3] Preparing local configuration...
+if not exist config.yaml (
+    copy /Y config.example.yaml config.yaml >nul
+    echo   Created config.yaml from config.example.yaml
+) else (
+    echo   [SKIP] config.yaml already exists
+)
+
+if not exist onnx_model\your-character\ (
     echo   [INFO] ONNX model not found. To convert your GPT-SoVITS models:
-    echo     venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/ganyu')"
+    echo     venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/your-character')"
 )
 if not exist ref\*.wav (
     echo   [INFO] No .wav found in ref/.
@@ -64,12 +71,13 @@ echo.
 echo ============================================
 echo   Setup complete! Before running, check:
 echo.
-echo   1. ref/             - contains your reference audio (.wav)
-echo   2. onnx_model/      - contains converted ONNX model
-echo   3. GenieData/       - contains TTS model (HuBERT/G2P/RoBERTa)
-echo   4. Make sure Ollama is running
-echo   5. ollama create ATRI -f ATRI    (first time only)
-echo   6. gui.bat                        (launch the app)
+echo   1. config.yaml      - matches your model and audio paths
+echo   2. ref/             - contains your reference audio (.wav)
+echo   3. onnx_model/      - contains converted ONNX model
+echo   4. GenieData/       - contains TTS model (HuBERT/G2P/RoBERTa)
+echo   5. Make sure Ollama is running
+echo   6. ollama create ATRI -f ATRI    (first time only)
+echo   7. gui.bat                        (launch the app)
 echo ============================================
 echo.
 pause

@@ -3,6 +3,9 @@ runtime/
 venv/
 .venv/
 
+# Local configuration
+config.yaml
+
 # Python cache
 __pycache__/
 *.pyc
@@ -30,7 +33,7 @@ ref/open_jtalk_dic_utf_8-1.11/
 .idea/
 .vscode/
 
-# Claude Code
+# Local tooling
 .claude/
 
 # Cache

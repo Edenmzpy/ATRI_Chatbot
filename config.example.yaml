@@ -1,0 +1,18 @@
+# Ollama
+dialog_url: "http://localhost:11434/api/generate"
+chat_model: "ATRI:latest"
+
+# Live2D and interface
+icon_image: "icon_image/icon.jpg"
+live2d_model: "atri/atri.model3.json"
+live2d_background: "live2d_background/star.png"
+chat_background: "chat_background/chat.png"
+chat_robot_name: "ATRI"
+user_name: "You"
+window_name: "ATRI Chatbot"
+
+# Genie-TTS
+character_name: "your-character"
+onnx_model_dir: "onnx_model/your-character"
+ref_audio_path: "ref/your-reference.wav"
+ref_prompt_text: "Replace this sentence with the exact transcript of your reference audio."
