@@ -1,137 +1,106 @@
 <div align="center">
-  <img src="docs/assets/atri-chatbot-hero.png" alt="ATRI Chatbot 项目视觉图" width="100%">
-  <h1>ATRI Chatbot</h1>
-  <p><strong>基于 Ollama、Live2D 与 Genie-TTS 的本地桌面语音伙伴。</strong></p>
-  <p>
-    <a href="README.md">English</a> ·
-    <a href="#快速开始">快速开始</a> ·
-    <a href="#工作流程">项目架构</a>
-  </p>
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.9-3776AB?logo=python&logoColor=white" alt="Python 3.9">
-    <img src="https://img.shields.io/badge/Ollama-本地大模型-111111?logo=ollama&logoColor=white" alt="Ollama">
-    <img src="https://img.shields.io/badge/Live2D-实时角色-00A4EF" alt="Live2D">
-    <img src="https://img.shields.io/badge/Genie--TTS-本地语音-7B61FF" alt="Genie-TTS">
-    <img src="https://img.shields.io/badge/平台-Windows-0078D4?logo=windows&logoColor=white" alt="Windows">
-  </p>
+
+<img src="docs/assets/atri-chatbot-hero.png" alt="ATRI Chatbot" width="100%" />
+
+# ATRI Chatbot
+
+**本地运行的 Live2D 语音伙伴：Ollama 负责对话，Genie-TTS 负责声音。**
+
+[English](README.md) · [简体中文](README.zh-CN.md)
+
+![Python](https://img.shields.io/badge/Python-3.9-3776AB?style=flat-square&logo=python&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-local_LLM-111111?style=flat-square&logo=ollama&logoColor=white)
+![Live2D](https://img.shields.io/badge/Live2D-avatar-00A4EF?style=flat-square)
+![Genie-TTS](https://img.shields.io/badge/Genie--TTS-offline_voice-7B61FF?style=flat-square)
+![Windows](https://img.shields.io/badge/Windows-0078D4?style=flat-square&logo=windows&logoColor=white)
+
 </div>
 
-ATRI Chatbot 是一个本地优先的桌面人机交互实验项目。它将 Ollama 对话模型、Live2D 角色渲染和 Genie-TTS 离线语音合成整合到同一个 PyQt5 界面中：回答可以流式显示，生成的声音会同步驱动角色口型。
+---
 
-> 华南理工大学机器人学院机器人与人机交互方向的个人实践项目。
+一个完全在本机运行的 PyQt5 桌面伙伴：本地 Ollama 模型流式生成回复，Genie-TTS 离线合成语音，音频振幅实时驱动 Live2D 角色的口型。
 
-## 项目亮点
+## 功能
 
-| 能力 | 实现方式 |
-| --- | --- |
-| 本地对话 | 通过 Ollama HTTP API 流式生成，并保留短期上下文 |
-| 动态角色 | 在 PyQt5 OpenGL 控件中渲染 Live2D 模型 |
-| 本地语音 | 使用 Genie-TTS ONNX 模型和用户自备参考音频 |
-| 实时口型 | 根据播放音频的振幅实时控制角色嘴部参数 |
-| 灵活配置 | 模型、角色名、背景和接口地址统一写入本地 YAML 文件 |
+- **本地对话**：Ollama HTTP 接口，流式输出，保留短期上下文
+- **动态角色**：在 PyQt5 OpenGL 控件中渲染 Live2D
+- **离线语音**：基于一段参考音频的 Genie-TTS ONNX 推理
+- **口型同步**：嘴型跟随播放音量变化
+- **单一配置**：模型、名称、背景和接口地址都在 `config.yaml` 中
 
 ## 工作流程
 
 ```mermaid
 flowchart LR
-    U[用户输入] --> UI[PyQt5 对话界面]
-    UI --> LLM[Ollama 本地大模型]
-    LLM -->|流式回答| UI
+    U[用户] --> UI[PyQt5 对话界面]
+    UI --> LLM[Ollama]
+    LLM -->|流式回复| UI
     LLM --> TTS[Genie-TTS]
-    TTS --> WAV[生成语音]
-    WAV --> A[pygame 播放]
-    WAV --> S[音频振幅分析]
+    TTS --> P[pygame 播放]
+    TTS --> S[振幅分析]
     S --> V[Live2D 口型同步]
-    C[config.yaml] -.-> UI
-    C -.-> LLM
-    C -.-> TTS
 ```
 
 ## 快速开始
 
-### 1. 环境要求
-
-- Windows 10 或 11
-- Python 3.9
-- [Ollama](https://ollama.com/)
-- 可用的 Genie-TTS ONNX 模型与参考音频
-
-### 2. 安装依赖
+**环境要求：** Windows 10/11 · Python 3.9 · [Ollama](https://ollama.com/) · Genie-TTS ONNX 模型与参考音频
 
 ```powershell
+# 1. 安装
 git clone https://github.com/Edenmzpy/ATRI_Chatbot.git
 cd ATRI_Chatbot
-./setup.bat
-```
+./setup.bat                      # 创建 venv、安装依赖、生成 config.yaml
 
-`setup.bat` 会创建虚拟环境、安装依赖，并将 `config.example.yaml` 复制为不会提交到仓库的本地配置 `config.yaml`。
-
-### 3. 准备 Ollama 角色
-
-确认 Ollama 已经启动，然后用仓库内的 `ATRI` Modelfile 创建角色模型：
-
-```powershell
+# 2. 创建角色模型（需先启动 Ollama）
 ollama pull openllm/causallm
-ollama create ATRI -f ATRI
-```
+ollama create ATRI -f ollama/ATRI.Modelfile
 
-`ollama create` 使用的名称需要与 `config.yaml` 中的 `chat_model` 一致；`:latest` 标签可以省略。
-
-### 4. 准备 Genie-TTS
-
-将模型权重放入被忽略的本地模型目录。如需转换为 ONNX，可运行：
-
-```powershell
+# 3. 将 GPT-SoVITS 权重转换为 ONNX（只需一次）
 venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/your-character')"
-```
 
-把一段简短的参考 `.wav` 音频放进 `ref/`，并在 `ref_prompt_text` 中填写与音频完全一致的文字。
-
-### 5. 配置并启动
-
-修改 `config.yaml`，使模型与音频路径符合本机环境，然后运行：
-
-```powershell
+# 4. 把参考 .wav 放进 ref/，修改 config.yaml 后启动
 ./gui.bat
 ```
+
+`ollama create` 的名称需与 `config.yaml` 中的 `chat_model` 一致（`:latest` 可省略）。
 
 ## 配置说明
 
 | 配置项 | 用途 |
 | --- | --- |
-| `dialog_url` | Ollama 文本生成接口地址 |
+| `dialog_url` | Ollama 生成接口地址 |
 | `chat_model` | Ollama 模型名称 |
-| `live2d_model` | 相对于 `Live_2d_models/` 的模型路径 |
+| `live2d_model` | 相对于 `assets/live2d/` 的模型路径 |
 | `character_name` | Genie-TTS 说话人标识 |
 | `onnx_model_dir` | 转换后的 ONNX 模型目录 |
-| `ref_audio_path` | 参考语音路径 |
-| `ref_prompt_text` | 参考语音的准确文本 |
+| `ref_audio_path` / `ref_prompt_text` | 参考音频及其准确文本 |
 
-全部设置可参考 [`config.example.yaml`](config.example.yaml)。
+完整模板：[`config.example.yaml`](config.example.yaml)
 
 ## 项目结构
 
 ```text
 ATRI_Chatbot/
-├── gui.py                 # 界面、Ollama、TTS 与口型同步
-├── ATRI                   # Ollama Modelfile
-├── config.example.yaml    # 安全的配置模板
-├── setup.bat              # 环境初始化脚本
-├── gui.bat                # 程序启动脚本
-├── Live_2d_models/        # Live2D 资源
-├── icon_image/            # 窗口图标
-├── chat_background/       # 对话区背景
-├── live2d_background/     # 角色区背景
-└── ref/                   # 用户自备参考音频
+├── gui.py                  # 界面、Ollama 客户端、TTS 与口型同步
+├── config.example.yaml     # 配置模板
+├── setup.bat · gui.bat     # 安装与启动脚本
+├── ollama/
+│   └── ATRI.Modelfile      # Ollama 角色设定
+├── assets/
+│   ├── live2d/atri/        # Live2D 模型
+│   ├── backgrounds/        # 对话区与角色区背景
+│   └── icons/              # 窗口图标
+├── ref/                    # 自备参考音频（不纳入版本管理）
+└── docs/assets/            # README 图片
 ```
 
 ## 当前限制
 
-- 初始化与启动脚本目前主要面向 Windows。
-- 模型权重和参考音频需要用户自行准备，不随仓库分发。
-- 启动程序前需要先运行 Ollama，并准备好全部本地模型资源。
-- 当前版本属于实验性项目，还不是完整封装的桌面产品。
+- 目前仅支持 Windows（安装与启动脚本）。
+- 不包含模型权重和参考音频。
+- 启动前需准备好 Ollama 及全部模型资源。
+- 实验性项目，并非封装完整的桌面应用。
 
 ## 版权说明
 
-本项目为非官方、非商业性质的同人实践。ATRI 及相关角色与视觉素材的权利归各自权利人所有。在仓库另行提供许可证之前，仓库内容不视为已授权再分发或商业使用。
+非官方、非商业的同人项目。ATRI 及相关角色、视觉素材的权利归各自权利人所有。在另行提供许可证之前，仓库内容不授权再分发或商业使用。

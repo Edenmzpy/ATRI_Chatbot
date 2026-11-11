@@ -3,10 +3,10 @@ dialog_url: "http://localhost:11434/api/generate"
 chat_model: "ATRI:latest"
 
 # Live2D and interface
-icon_image: "icon_image/icon.jpg"
+icon_image: "assets/icons/icon.jpg"
 live2d_model: "atri/atri.model3.json"
-live2d_background: "live2d_background/star.png"
-chat_background: "chat_background/chat.png"
+live2d_background: "assets/backgrounds/live2d-star.png"
+chat_background: "assets/backgrounds/chat.png"
 chat_robot_name: "ATRI"
 user_name: "You"
 window_name: "ATRI Chatbot"

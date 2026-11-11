@@ -11,7 +11,7 @@ echo   1. Python 3.9  https://www.python.org/downloads/
 echo   2. Ollama      https://ollama.com/download
 echo.
 echo   After installing Ollama, create the ATRI model:
-echo     ollama create ATRI -f ATRI
+echo     ollama create ATRI -f ollama/ATRI.Modelfile
 echo.
 echo ============================================
 echo.
@@ -76,7 +76,7 @@ echo   2. ref/             - contains your reference audio (.wav)
 echo   3. onnx_model/      - contains converted ONNX model
 echo   4. GenieData/       - contains TTS model (HuBERT/G2P/RoBERTa)
 echo   5. Make sure Ollama is running
-echo   6. ollama create ATRI -f ATRI    (first time only)
+echo   6. ollama create ATRI -f ollama/ATRI.Modelfile   (first time only)
 echo   7. gui.bat                        (launch the app)
 echo ============================================
 echo.

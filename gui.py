@@ -25,9 +25,32 @@ import genie_tts as genie
 from genie_tts.Core.Inference import tts_client as _genie_tts_client
 
 
+LIVE2D_DIRECTORY = os.path.join("assets", "live2d")
+
+# Asset paths used before the assets/ reorganization; keeps old config.yaml files working.
+LEGACY_ASSET_PATHS = {
+    "icon_image/": "assets/icons/",
+    "chat_background/": "assets/backgrounds/",
+    "live2d_background/star.png": "assets/backgrounds/live2d-star.png",
+}
+
+
+def _migrate_asset_path(path):
+    if not isinstance(path, str):
+        return path
+    normalized = path.replace("\\", "/")
+    for old, new in LEGACY_ASSET_PATHS.items():
+        if normalized.startswith(old):
+            return new + normalized[len(old):]
+    return path
+
+
 def load_config():
     with open("config.yaml", "r", encoding="utf-8") as file:
         config = yaml.safe_load(file)
+    for key in ("icon_image", "chat_background", "live2d_background"):
+        if key in config:
+            config[key] = _migrate_asset_path(config[key])
     return config
 
 
@@ -42,7 +65,7 @@ class Live2DWidget(QOpenGLWidget):
         pygame.mixer.init()
         live2d.init()
         super().__init__(parent)
-        self.RESOURCES_DIRECTORY = os.path.join(os.getcwd(), "Live_2d_models")
+        self.RESOURCES_DIRECTORY = os.path.join(os.getcwd(), LIVE2D_DIRECTORY)
         self.model = None
         self.wavHandler = WavHandler()
         self.audioPlayed = False
