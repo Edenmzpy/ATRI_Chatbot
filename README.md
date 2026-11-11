@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/assets/atri-chatbot-hero.png" alt="ATRI Chatbot" width="100%" />
+<img src="docs/assets/hero.webp" alt="ATRI Chatbot" width="100%" />
 
 # ATRI Chatbot
 
-**A local-first Live2D voice companion — Ollama for the mind, Genie-TTS for the voice.**
+**A Live2D voice companion that runs entirely on your PC.**
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+**English** · [简体中文](README.zh-CN.md)
 
 ![Python](https://img.shields.io/badge/Python-3.9-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Ollama](https://img.shields.io/badge/Ollama-local_LLM-111111?style=flat-square&logo=ollama&logoColor=white)
@@ -16,91 +16,59 @@
 
 </div>
 
----
+<img src="docs/assets/screenshot.webp" alt="ATRI Chatbot window: chat panel and Live2D avatar" width="100%" />
 
-A PyQt5 desktop companion that runs entirely on your machine: replies stream from a local Ollama model, Genie-TTS speaks them offline, and the audio amplitude drives the Live2D avatar's lip sync in real time.
-
-## Features
-
-- **Local conversation** — Ollama HTTP API, streamed replies, short-term context
-- **Animated avatar** — Live2D rendered in a PyQt5 OpenGL widget
-- **Offline voice** — Genie-TTS ONNX inference from a short reference clip
-- **Lip sync** — mouth movement follows playback amplitude
-- **One config file** — models, names, backgrounds and endpoints in `config.yaml`
-
-## How it works
-
-```mermaid
-flowchart LR
-    U[User] --> UI[PyQt5 chat UI]
-    UI --> LLM[Ollama]
-    LLM -->|streamed reply| UI
-    LLM --> TTS[Genie-TTS]
-    TTS --> P[pygame playback]
-    TTS --> S[Amplitude analysis]
-    S --> V[Live2D lip sync]
-```
+<img src="docs/assets/how-it-works.webp" alt="Pipeline: you → Ollama → Genie-TTS → playback → Live2D lip sync" width="100%" />
 
 ## Quick start
 
-**Requirements:** Windows 10/11 · Python 3.9 · [Ollama](https://ollama.com/) · a Genie-TTS ONNX model + reference audio
+**Needs:** Windows 10/11 · Python 3.9 · [Ollama](https://ollama.com/) · a Genie-TTS (GPT-SoVITS) voice model + a short reference `.wav`
 
 ```powershell
-# 1. Install
 git clone https://github.com/Edenmzpy/ATRI_Chatbot.git
 cd ATRI_Chatbot
-./setup.bat                      # creates venv, installs deps, copies config.yaml
+./setup.bat                                    # venv + dependencies + config.yaml
 
-# 2. Create the character model (Ollama must be running)
 ollama pull openllm/causallm
-ollama create ATRI -f ollama/ATRI.Modelfile
+ollama create ATRI -f ollama/ATRI.Modelfile    # the character persona
 
-# 3. Convert your GPT-SoVITS weights to ONNX (once)
-venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/your-character')"
-
-# 4. Put a short reference .wav in ref/, edit config.yaml, then launch
-./gui.bat
+./gui.bat                                      # launch
 ```
 
-The `ollama create` name must match `chat_model` in `config.yaml` (`:latest` is implicit).
+Before launching: put the converted voice model in `onnx_model/`, the reference clip in `ref/`, and point `config.yaml` at them.
 
-## Configuration
+<details>
+<summary>Convert GPT-SoVITS weights to ONNX</summary>
+
+```powershell
+venv\Scripts\python -c "import genie_tts as genie; genie.convert_to_onnx('GPT_weights_v2/your_model.ckpt', 'SoVITS_weights_v2/your_model.pth', 'onnx_model/your-character')"
+```
+</details>
+
+<details>
+<summary>Configuration keys</summary>
 
 | Key | Purpose |
 | --- | --- |
+| `chat_model` | Ollama model name — must match `ollama create` |
 | `dialog_url` | Ollama generate endpoint |
-| `chat_model` | Ollama model name |
-| `live2d_model` | Model path relative to `assets/live2d/` |
-| `character_name` | Genie-TTS speaker id |
-| `onnx_model_dir` | Converted ONNX model directory |
-| `ref_audio_path` / `ref_prompt_text` | Reference audio and its exact transcript |
+| `live2d_model` | Path under `assets/live2d/` |
+| `character_name` · `onnx_model_dir` | Genie-TTS speaker and model folder |
+| `ref_audio_path` · `ref_prompt_text` | Reference clip and its exact transcript |
 
 Full template: [`config.example.yaml`](config.example.yaml)
+</details>
 
 ## Project layout
 
 ```text
-ATRI_Chatbot/
-├── gui.py                  # UI, Ollama client, TTS and lip sync
-├── config.example.yaml     # Configuration template
-├── setup.bat · gui.bat     # Setup and launch scripts
-├── ollama/
-│   └── ATRI.Modelfile      # Character persona for Ollama
-├── assets/
-│   ├── live2d/atri/        # Live2D model
-│   ├── backgrounds/        # Chat and avatar backgrounds
-│   └── icons/              # Window icons
-├── ref/                    # Your reference audio (git-ignored)
-└── docs/assets/            # README artwork
+gui.py                  UI, Ollama client, TTS and lip sync
+ollama/ATRI.Modelfile   character persona
+assets/                 Live2D model, backgrounds, icons
+config.example.yaml     settings template
+setup.bat · gui.bat     install / launch
 ```
-
-## Limitations
-
-- Windows only for now (setup and launch scripts).
-- Model weights and reference audio are not included.
-- Ollama and all model assets must be ready before launch.
-- Experimental project, not a packaged application.
 
 ## Notice
 
-Unofficial, non-commercial fan project. ATRI and related character and visual assets belong to their respective rights holders. Without a separate license, the repository contents are not licensed for redistribution or commercial use.
+Experimental, Windows-only fan project; model weights and voice clips are not included. ATRI and related character assets belong to their respective rights holders — not licensed for redistribution or commercial use.
